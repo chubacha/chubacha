@@ -48,18 +48,30 @@
           }
         }).addTo(map);
 
-        // Add hardcoded KML file (FullRoute100DP.kml) to the map
+        // Add GeoJSON file (FullRoute100DP.json) to the map
         const fullRouteLayer = L.geoJson(null, {
           style: function() {
             return { color: '#0000FF', weight: 3, opacity: 0.7 };
           }
         });
-        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.kml', null, fullRouteLayer)
-          .bindPopup('<b>Full Route Overview</b><br>This is the complete route map.')
-          .addTo(map);
 
-        // Add elevation data for FullRoute100DP
-        elevationControl.addData(fullRouteLayer.toGeoJSON());
+        // Load the GeoJSON data (now from .json file)
+        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/geojson/FullRoute100DP.json')
+          .then(response => response.json())
+          .then(data => {
+            fullRouteLayer.addData(data).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
+
+            // Add elevation data for FullRoute100DP (make sure it has elevation data)
+            fullRouteLayer.eachLayer(function(layer) {
+              if (layer.toGeoJSON) {
+                elevationControl.addData(layer.toGeoJSON());
+              }
+            });
+
+            // Adjust map view to fit the full route bounds
+            map.fitBounds(fullRouteLayer.getBounds());
+          })
+          .catch(error => console.error('Error loading GeoJSON file: ', error));
 
         // Store the KML layers in an object
         const kmlLayers = {};
@@ -82,7 +94,11 @@
             .addTo(map);
 
           // Add elevation data for dynamic KML layers
-          elevationControl.addData(kmlLayers[sanitizedLegName].toGeoJSON());
+          kmlLayers[sanitizedLegName].eachLayer(function(layer) {
+            if (layer.toGeoJSON) {
+              elevationControl.addData(layer.toGeoJSON());
+            }
+          });
         });
 
         // Update elevation profile on mousemove
