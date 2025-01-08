@@ -1,118 +1,119 @@
 
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Trip Map Overview</title>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
-      <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
-      <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
-      <style>
-        #map { height: 700px; width: 100%; }
-      </style>
-    </head>
-    <body>
-      <h2>Trip Map Overview</h2>
-      <div id="map"></div>
-      <script>
-        // Set fixed map center to 57.5?N, 15.5?E with zoom level 4
-        const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
-        L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenTopoMap contributors',
-          maxZoom: 17
-        }).addTo(map);
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>Trip Map Overview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
+    <style>
+      #map { height: 700px; width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h2>Trip Map Overview</h2>
+    <div id="map"></div>
+    <script>
+      // Pass rows data as a JavaScript variable in the iframe
+      const rows = [{"legName":"Leer (Ostfriesland), Germany to Norden, Germany","trackDate":"2024-08-12T00:00:00.000Z","trackColor":"#6AFF00","totalDistance":88.19068056863874,"daysPassed":149,"dayOfTrip":1,"blogPostLink":"http://cptrangerchris.blogspot.com/2025/01/leer-ostfriesland-germany-to-norden_78.html","kmlUrl":"https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-12-08.kml"}];  // Serialize rows data
 
-        // Initialize Elevation Control
-        const elevationControl = L.control.elevation({
-          position: 'bottomleft',
-          theme: 'steelblue-theme',
-          width: 600,
-          height: 125,
-          margins: {
-            top: 10,
-            right: 20,
-            bottom: 30,
-            left: 50
-          },
-          followMarker: true,
-          hoverNumber: true,
-          imperial: false,
-          reverseCoords: false,
-          useHeightIndicator: true,
-          graphStyle: {
-            plotBase: undefined,
-            plotLines: true,
-            preferCanvas: true
-          }
-        }).addTo(map);
+      // Set fixed map center to 57.5?N, 15.5?E with zoom level 4
+      const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenTopoMap contributors',
+        maxZoom: 17
+      }).addTo(map);
 
-        // Add GeoJSON file (FullRoute100DP.json) to the map
-        const fullRouteLayer = L.geoJson(null, {
-          style: function() {
-            return { color: '#0000FF', weight: 3, opacity: 0.7 };
-          }
-        });
+      // Initialize Elevation Control
+      const elevationControl = L.control.elevation({
+        position: 'bottomleft',
+        theme: 'steelblue-theme',
+        width: 600,
+        height: 125,
+        margins: {
+          top: 10,
+          right: 20,
+          bottom: 30,
+          left: 50
+        },
+        followMarker: true,
+        hoverNumber: true,
+        imperial: false,
+        reverseCoords: false,
+        useHeightIndicator: true,
+        graphStyle: {
+          plotBase: undefined,
+          plotLines: true,
+          preferCanvas: true
+        }
+      }).addTo(map);
 
-        // Load the GeoJSON data (now from .json file)
-        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
-          .then(response => response.json())
-          .then(data => {
-            fullRouteLayer.addData(data).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
+      // Add GeoJSON file (FullRoute100DP.json) to the map
+      const fullRouteLayer = L.geoJson(null, {
+        style: function() {
+          return { color: '#0000FF', weight: 3, opacity: 0.7 };
+        }
+      });
 
-            // Add elevation data for FullRoute100DP (make sure it has elevation data)
-            fullRouteLayer.eachLayer(function(layer) {
-              if (layer.toGeoJSON) {
-                elevationControl.addData(layer.toGeoJSON());
-              }
-            });
+      // Load the GeoJSON data (now from .json file)
+      fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
+        .then(response => response.json())
+        .then(data => {
+          fullRouteLayer.addData(data).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
 
-            // Adjust map view to fit the full route bounds
-            map.fitBounds(fullRouteLayer.getBounds());
-          })
-          .catch(error => console.error('Error loading GeoJSON file: ', error));
-
-        // Store the KML layers in an object
-        const kmlLayers = {};
-
-        // Add dynamic KML layers
-        rows.forEach(function(row) {
-          console.log('Adding KML layer for: ' + row.legName); // Debugging log
-          const sanitizedLegName = sanitizeLegName(row.legName); // Sanitize leg name
-
-          // Create a layer for the current KML
-          kmlLayers[sanitizedLegName] = L.geoJson(null, {
-            style: function() {
-              return { color: row.trackColor, weight: 4, opacity: 0.8 }; // Fix reference to row.trackColor
-            }
-          });
-
-          // Add KML data to this layer
-          omnivore.kml(row.kmlUrl, null, kmlLayers[sanitizedLegName])
-            .bindPopup('<b>' + row.legName + '</b><br>Track Date: ' + row.trackDate + '<br>Total Distance: ' + row.totalDistance + ' km<br>Days Ridden: ' + row.daysPassed + '<br>Day of Trip: ' + row.dayOfTrip + '<br><a href="' + row.blogPostLink + '">Blog Post</a>')
-            .addTo(map);
-
-          // Add elevation data for dynamic KML layers
-          kmlLayers[sanitizedLegName].eachLayer(function(layer) {
+          // Add elevation data for FullRoute100DP (make sure it has elevation data)
+          fullRouteLayer.eachLayer(function(layer) {
             if (layer.toGeoJSON) {
               elevationControl.addData(layer.toGeoJSON());
             }
           });
+
+          // Adjust map view to fit the full route bounds
+          map.fitBounds(fullRouteLayer.getBounds());
+        })
+        .catch(error => console.error('Error loading GeoJSON file: ', error));
+
+      // Store the KML layers in an object
+      const kmlLayers = {};
+
+      // Add dynamic KML layers
+      rows.forEach(function(row) {
+        console.log('Adding KML layer for: ' + row.legName); // Debugging log
+        const sanitizedLegName = sanitizeLegName(row.legName); // Sanitize leg name
+
+        // Create a layer for the current KML
+        kmlLayers[sanitizedLegName] = L.geoJson(null, {
+          style: function() {
+            return { color: row.trackColor, weight: 4, opacity: 0.8 }; // Fix reference to row.trackColor
+          }
         });
 
-        // Update elevation profile on mousemove
-        map.on('mousemove', function(e) {
-          const latlng = e.latlng;
-          elevationControl.elevationProfiles.forEach(function(profile) {
-            const point = profile.findClosestPoint(latlng);
-            if (point) {
-              profile.highlightPoint(point);
-            }
-          });
-        });
+        // Add KML data to this layer
+        omnivore.kml(row.kmlUrl, null, kmlLayers[sanitizedLegName])
+          .bindPopup('<b>' + row.legName + '</b><br>Track Date: ' + row.trackDate + '<br>Total Distance: ' + row.totalDistance + ' km<br>Days Ridden: ' + row.daysPassed + '<br>Day of Trip: ' + row.dayOfTrip + '<br><a href="' + row.blogPostLink + '">Blog Post</a>')
+          .addTo(map);
 
-      </script>
-    </body>
-    </html>
-  
+        // Add elevation data for dynamic KML layers
+        kmlLayers[sanitizedLegName].eachLayer(function(layer) {
+          if (layer.toGeoJSON) {
+            elevationControl.addData(layer.toGeoJSON());
+          }
+        });
+      });
+
+      // Update elevation profile on mousemove
+      map.on('mousemove', function(e) {
+        const latlng = e.latlng;
+        elevationControl.elevationProfiles.forEach(function(profile) {
+          const point = profile.findClosestPoint(latlng);
+          if (point) {
+            profile.highlightPoint(point);
+          }
+        });
+      });
+    </script>
+  </body>
+  </html>
