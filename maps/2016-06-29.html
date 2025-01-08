@@ -1,36 +1,43 @@
 
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Leaflet Map</title>
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-      <script src="https://unpkg.com/leaflet-elevation/dist/leaflet-elevation.min.js"></script>
-      <link rel="stylesheet" href="https://unpkg.com/leaflet-elevation/dist/leaflet-elevation.min.css" />
-    </head>
-    <body>
-      <div id="map" style="width: 100%; height: 750px;"></div>
-      <script>
-          const map = L.map('map').setView([51.505, -0.09], 13);
-          L.tileLayer('https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=0952b4b77c244683b65c482658d6dcce', {
-            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
-                         '<a href="https://www.thunderforest.com/">Thunderforest</a>',
-            maxZoom: 19
-          }).addTo(map);
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Map</title>
+  <!-- Using newer Leaflet CDN version -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  
+  <!-- Leaflet Elevation -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-elevation@0.0.3/dist/leaflet-elevation.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-elevation@0.0.3/dist/leaflet-elevation.min.css" />
+  
+  <!-- Omnivore KML -->
+  <script src="https://unpkg.com/leaflet-omnivore@0.2.0/leaflet-omnivore.min.js"></script>
+</head>
+<body>
+  <div id="map" style="width: 100%; height: 600px;"></div>
+  <script>
+      const map = L.map('map').setView([51.505, -0.09], 13);
+      L.tileLayer('https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=0952b4b77c244683b65c482658d6dcce', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+                     '<a href="https://www.thunderforest.com/">Thunderforest</a>',
+        maxZoom: 19
+      }).addTo(map);
 
-        const kmlLayer = omnivore.kml('https://drive.google.com/uc?export=download?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5').on('ready', function () {
-          map.fitBounds(kmlLayer.getBounds());
-        }).addTo(map);
+    const kmlLayer = omnivore.kml('https://drive.google.com/uc?export=download?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5').on('ready', function () {
+      map.fitBounds(kmlLayer.getBounds());
+    }).addTo(map);
 
-        const elevationControl = L.control.elevation({
-          theme: 'steelblue-theme',
-          followMarker: true
-        }).addTo(map);
+    const elevationControl = L.control.elevation({
+      theme: 'steelblue-theme',
+      followMarker: true
+    }).addTo(map);
 
-        kmlLayer.eachLayer(function (layer) {
-          elevationControl.addData(layer.feature);
-        });
-      </script>
-    </body>
-    </html>
+    kmlLayer.eachLayer(function (layer) {
+      elevationControl.addData(layer.feature);
+    });
+  </script>
+</body>
+</html>
+
   
