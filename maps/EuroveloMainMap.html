@@ -7,6 +7,8 @@
       <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
+      <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
       <style>
         #map { height: 700px; width: 100%; }
       </style>
@@ -22,6 +24,30 @@
           maxZoom: 17
         }).addTo(map);
 
+        // Initialize Elevation Control
+        const elevationControl = L.control.elevation({
+          position: 'bottomleft',
+          theme: 'steelblue-theme',
+          width: 600,
+          height: 125,
+          margins: {
+            top: 10,
+            right: 20,
+            bottom: 30,
+            left: 50
+          },
+          followMarker: true,
+          hoverNumber: true,
+          imperial: false,
+          reverseCoords: false,
+          useHeightIndicator: true,
+          graphStyle: {
+            plotBase: undefined,
+            plotLines: true,
+            preferCanvas: true
+          }
+        }).addTo(map);
+
         // Add hardcoded KML file (FullRoute100DP.kml) to the map
         const fullRouteLayer = L.geoJson(null, {
           style: function() {
@@ -31,18 +57,46 @@
         omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.kml', null, fullRouteLayer)
           .bindPopup('<b>Full Route Overview</b><br>This is the complete route map.')
           .addTo(map);
-      
-        const customLayer_Leer__Ostfriesland___Germany_to_Norden__Germany = L.geoJson(null, {
-          style: function() {
-            return { color: '#6AFF00', weight: 4, opacity: 0.8 };
-          }
+
+        // Add elevation data for FullRoute100DP
+        elevationControl.addData(fullRouteLayer.toGeoJSON());
+
+        // Store the KML layers in an object
+        const kmlLayers = {};
+
+        // Add dynamic KML layers
+        rows.forEach(function(row) {
+          console.log('Adding KML layer for: ' + row.legName); // Debugging log
+          const sanitizedLegName = sanitizeLegName(row.legName); // Sanitize leg name
+
+          // Create a layer for the current KML
+          kmlLayers[sanitizedLegName] = L.geoJson(null, {
+            style: function() {
+              return { color: row.trackColor, weight: 4, opacity: 0.8 }; // Fix reference to row.trackColor
+            }
+          });
+
+          // Add KML data to this layer
+          omnivore.kml(row.kmlUrl, null, kmlLayers[sanitizedLegName])
+            .bindPopup('<b>' + row.legName + '</b><br>Track Date: ' + row.trackDate + '<br>Total Distance: ' + row.totalDistance + ' km<br>Days Ridden: ' + row.daysPassed + '<br>Day of Trip: ' + row.dayOfTrip + '<br><a href="' + row.blogPostLink + '">Blog Post</a>')
+            .addTo(map);
+
+          // Add elevation data for dynamic KML layers
+          elevationControl.addData(kmlLayers[sanitizedLegName].toGeoJSON());
         });
 
-        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-12-08.kml', null, customLayer_Leer__Ostfriesland___Germany_to_Norden__Germany)
-          .bindPopup('<b>Leer (Ostfriesland), Germany to Norden, Germany</b><br>Track Date: Mon Aug 12 2024 01:00:00 GMT+0100 (British Summer Time)<br>Total Distance: 88.19068056863874 km<br>Days Ridden: 149<br>Day of Trip: 1<br><a href="http://cptrangerchris.blogspot.com/2025/01/leer-ostfriesland-germany-to-norden_78.html">Blog Post</a>')
-          .addTo(map);
-        
+        // Update elevation profile on mousemove
+        map.on('mousemove', function(e) {
+          const latlng = e.latlng;
+          elevationControl.elevationProfiles.forEach(function(profile) {
+            const point = profile.findClosestPoint(latlng);
+            if (point) {
+              profile.highlightPoint(point);
+            }
+          });
+        });
+
       </script>
     </body>
     </html>
-    
+  
