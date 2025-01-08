@@ -56,7 +56,7 @@
         });
 
         // Load the GeoJSON data (now from .json file)
-        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/geojson/FullRoute100DP.json')
+        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.json')
           .then(response => response.json())
           .then(data => {
             fullRouteLayer.addData(data).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
