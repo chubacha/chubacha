@@ -31,7 +31,7 @@
         }).addTo(map);
 
         // Load the KML file asynchronously
-        omnivore.kml('https://drive.google.com/uc?export=download?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5')
+        omnivore.kml('https://drive.google.com/uc?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5')
           .on('ready', function() {
             map.fitBounds(this.getBounds()); // Fit the map to the bounds of the KML layer
           })
@@ -47,7 +47,7 @@
         }).addTo(map);
 
         // Add each KML layer to the elevation control
-        omnivore.kml('https://drive.google.com/uc?export=download?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5').eachLayer(function(layer) {
+        omnivore.kml('https://drive.google.com/uc?id=1HKwp4oDLGHTr26y-Azzpqf3W_vcWBn_5').eachLayer(function(layer) {
           elevationControl.addData(layer.feature);
         });
       </script>
