@@ -69,11 +69,7 @@
         .then(response => response.json())
         .then(data => {
           // Sort the GeoJSON features by 'id' property
-          const sortedFeatures = data.features.sort((a, b) => {
-            if (a.id < b.id) return -1;
-            if (a.id > b.id) return 1;
-            return 0;
-          });
+          const sortedFeatures = data.features.sort((a, b) => a.id - b.id);
 
           // Create a new GeoJSON object with the sorted features
           const sortedGeoJSON = {
@@ -81,32 +77,41 @@
             features: sortedFeatures,
           };
 
-          // Create a new layer for the sorted GeoJSON data
-          const sortedLayer = L.geoJson(sortedGeoJSON, {
-            onEachFeature: function (feature, layer) {
-              // Ensure that the elevation data is added in the same order
-              if (layer.toGeoJSON) {
-                console.log('Adding elevation data for: ', feature.id); // Debugging log
-                elevationControl.addData(layer.toGeoJSON()); // Add elevation data for this feature
+          // Create a layer group to hold all the layers
+          const sortedLayerGroup = L.layerGroup();
+
+          // Iterate through sorted features and add to layer group
+          sortedGeoJSON.features.forEach(function (feature) {
+            const layer = L.geoJson(feature, {
+              onEachFeature: function (feature, layer) {
+                // Ensure that the elevation data is added in the same order
+                if (layer.toGeoJSON) {
+                  console.log('Adding elevation data for: ', feature.id); // Debugging log
+                  elevationControl.addData(layer.toGeoJSON()); // Add elevation data for this feature
+                }
               }
-            }
+            });
+
+            // Add each sorted layer to the layer group
+            sortedLayerGroup.addLayer(layer);
           });
 
-          // Bind the popup for the entire route overview
-          sortedLayer.bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
+          // Add the sorted layer group to the map
+          sortedLayerGroup.addTo(map);
 
-          // Now we can add the elevation data properly in the sorted order
-          sortedLayer.eachLayer(function(layer) {
+          // Adjust the map view to fit the bounds of the sorted layer group
+          map.fitBounds(sortedLayerGroup.getBounds());
+
+          // Now that the layers are added in order, ensure elevation control is also updated
+          sortedLayerGroup.eachLayer(function(layer) {
             if (layer.toGeoJSON) {
-              // Each layer's elevation data is added after it has been added to the map
+              // Ensure each layer's elevation data is properly added
               elevationControl.addData(layer.toGeoJSON());
             }
           });
-
-          // Adjust the map view to fit the sorted route bounds
-          map.fitBounds(sortedLayer.getBounds());
         })
         .catch(error => console.error('Error loading GeoJSON file: ', error));
+
 
 
       // Store the KML layers in an object
