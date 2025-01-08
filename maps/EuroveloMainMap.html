@@ -15,64 +15,53 @@
       <h2>Trip Map Overview</h2>
       <div id="map"></div>
       <script>
-        const map = L.map('map').setView([52.5, 15.5], 16); // Hardcoded center and zoom
+        // Set fixed map center to 52.5?N, 15.5?E with zoom level 16
+        const map = L.map('map').setView([52.5, 15.5], 16);
         L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenTopoMap contributors',
           maxZoom: 17
         }).addTo(map);
       
-      const customLayer_Uslar__Germany_to_M_nster__Germany = L.geoJson(null, {
-        style: function() {
-          return { color: '#D9CB00', weight: 4, opacity: 0.8 };
-        }
-      });
+        const customLayer_Uslar__Germany_to_M_nster__Germany = L.geoJson(null, {
+          style: function() {
+            return { color: '#D9CB00', weight: 4, opacity: 0.8 };
+          }
+        });
 
-      omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-01-12.kml', null, customLayer_Uslar__Germany_to_M_nster__Germany)
-        .on('ready', function() {
-          map.fitBounds(this.getBounds()); // Fit bounds to this specific KML layer
-        })
-        .bindPopup('<b>Uslar, Germany to M?nster, Germany</b><br>Track Date: Sun Dec 01 2024 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 255.66454984567224 km<br>Days Ridden: 38<br>Day of Trip: 2<br><a href="http://cptrangerchris.blogspot.com/2025/01/uslar-germany-to-munster-germany_65.html">Blog Post</a>')
-        .addTo(map);
-    
-      const customLayer_Detmold__Germany_to_Uslar__Germany = L.geoJson(null, {
-        style: function() {
-          return { color: '#F1B300', weight: 4, opacity: 0.8 };
-        }
-      });
+        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-01-12.kml', null, customLayer_Uslar__Germany_to_M_nster__Germany)
+          .bindPopup('<b>Uslar, Germany to M?nster, Germany</b><br>Track Date: Sun Dec 01 2024 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 255.66454984567224 km<br>Days Ridden: 38<br>Day of Trip: 2<br><a href="http://cptrangerchris.blogspot.com/2025/01/uslar-germany-to-munster-germany_65.html">Blog Post</a>')
+          .addTo(map);
+        
+        const customLayer_Detmold__Germany_to_Uslar__Germany = L.geoJson(null, {
+          style: function() {
+            return { color: '#F1B300', weight: 4, opacity: 0.8 };
+          }
+        });
 
-      omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-25-12.kml', null, customLayer_Detmold__Germany_to_Uslar__Germany)
-        .on('ready', function() {
-          map.fitBounds(this.getBounds()); // Fit bounds to this specific KML layer
-        })
-        .bindPopup('<b>Detmold, Germany to Uslar, Germany</b><br>Track Date: Wed Dec 25 2024 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 91.78471442047557 km<br>Days Ridden: 14<br>Day of Trip: 3<br><a href="http://cptrangerchris.blogspot.com/2025/01/detmold-germany-to-uslar-germany_97.html">Blog Post</a>')
-        .addTo(map);
-    
-      const customLayer_M_nster__Germany_to_Detmold__Germany = L.geoJson(null, {
-        style: function() {
-          return { color: '#FFA500', weight: 4, opacity: 0.8 };
-        }
-      });
+        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-25-12.kml', null, customLayer_Detmold__Germany_to_Uslar__Germany)
+          .bindPopup('<b>Detmold, Germany to Uslar, Germany</b><br>Track Date: Wed Dec 25 2024 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 91.78471442047557 km<br>Days Ridden: 14<br>Day of Trip: 3<br><a href="http://cptrangerchris.blogspot.com/2025/01/detmold-germany-to-uslar-germany_97.html">Blog Post</a>')
+          .addTo(map);
+        
+        const customLayer_M_nster__Germany_to_Detmold__Germany = L.geoJson(null, {
+          style: function() {
+            return { color: '#FFA500', weight: 4, opacity: 0.8 };
+          }
+        });
 
-      omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2025-08-01.kml', null, customLayer_M_nster__Germany_to_Detmold__Germany)
-        .on('ready', function() {
-          map.fitBounds(this.getBounds()); // Fit bounds to this specific KML layer
-        })
-        .bindPopup('<b>M?nster, Germany to Detmold, Germany</b><br>Track Date: Wed Jan 08 2025 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 105.5367397387882 km<br>Days Ridden: 0<br>Day of Trip: 4<br><a href="http://cptrangerchris.blogspot.com/2025/01/munster-germany-to-detmold-germany_62.html">Blog Post</a>')
-        .addTo(map);
-    
-      const customLayer_M_nster__Germany_to_M_nster__Germany = L.geoJson(null, {
-        style: function() {
-          return { color: '#00FF00', weight: 4, opacity: 0.8 };
-        }
-      });
+        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2025-08-01.kml', null, customLayer_M_nster__Germany_to_Detmold__Germany)
+          .bindPopup('<b>M?nster, Germany to Detmold, Germany</b><br>Track Date: Wed Jan 08 2025 00:00:00 GMT+0000 (Greenwich Mean Time)<br>Total Distance: 105.5367397387882 km<br>Days Ridden: 0<br>Day of Trip: 4<br><a href="http://cptrangerchris.blogspot.com/2025/01/munster-germany-to-detmold-germany_62.html">Blog Post</a>')
+          .addTo(map);
+        
+        const customLayer_M_nster__Germany_to_M_nster__Germany = L.geoJson(null, {
+          style: function() {
+            return { color: '#00FF00', weight: 4, opacity: 0.8 };
+          }
+        });
 
-      omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2016-29-06.kml', null, customLayer_M_nster__Germany_to_M_nster__Germany)
-        .on('ready', function() {
-          map.fitBounds(this.getBounds()); // Fit bounds to this specific KML layer
-        })
-        .bindPopup('<b>M?nster, Germany to M?nster, Germany</b><br>Track Date: Wed Jun 29 2016 01:00:00 GMT+0100 (British Summer Time)<br>Total Distance: 106.51716144438835 km<br>Days Ridden: 3115<br>Day of Trip: 1<br><a href="http://cptrangerchris.blogspot.com/2025/01/munster-germany-to-munster-germany_64.html">Blog Post</a>')
-        .addTo(map);
-    
+        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2016-29-06.kml', null, customLayer_M_nster__Germany_to_M_nster__Germany)
+          .bindPopup('<b>M?nster, Germany to M?nster, Germany</b><br>Track Date: Wed Jun 29 2016 01:00:00 GMT+0100 (British Summer Time)<br>Total Distance: 106.51716144438835 km<br>Days Ridden: 3115<br>Day of Trip: 1<br><a href="http://cptrangerchris.blogspot.com/2025/01/munster-germany-to-munster-germany_64.html">Blog Post</a>')
+          .addTo(map);
+        
       </script>
     </body>
     </html>
