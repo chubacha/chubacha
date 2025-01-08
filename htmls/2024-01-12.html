@@ -101,7 +101,7 @@
     const startIcon = createMarkerIcon('start-marker');
     const endIcon = createMarkerIcon('end-marker');
     
-    const runLayer = omnivore.kml('https://github.com/chubacha/chubacha/blob/main/kmls/2024-01-12.kml?raw=true', null, customLayer)
+    const runLayer = omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2024-01-12.kml?token=BEZNPRZPYIJALCCXHLTAYHDHP3PGO', null, customLayer)
       .on('ready', function() {
         const geoJSON = this.toGeoJSON();
         if (geoJSON.features.length > 0 && geoJSON.features[0].geometry.coordinates.length > 0) {
