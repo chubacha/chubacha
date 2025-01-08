@@ -68,7 +68,21 @@
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(response => response.json())
         .then(data => {
-          fullRouteLayer.addData(data).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
+          // Sort the GeoJSON features by 'id' property
+          const sortedFeatures = data.features.sort((a, b) => {
+            if (a.properties.id < b.properties.id) return -1;
+            if (a.properties.id > b.properties.id) return 1;
+            return 0;
+          });
+
+          // Create a new GeoJSON object with the sorted features
+          const sortedGeoJSON = {
+            type: 'FeatureCollection',
+            features: sortedFeatures,
+          };
+
+          // Create a layer for the sorted GeoJSON data
+          fullRouteLayer.addData(sortedGeoJSON).bindPopup('<b>Full Route Overview</b><br>This is the complete route map.').addTo(map);
 
           // Add elevation data for FullRoute100DP (make sure it has elevation data)
           fullRouteLayer.eachLayer(function(layer) {
@@ -81,6 +95,7 @@
           map.fitBounds(fullRouteLayer.getBounds());
         })
         .catch(error => console.error('Error loading GeoJSON file: ', error));
+
 
       // Store the KML layers in an object
       const kmlLayers = {};
