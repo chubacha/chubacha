@@ -21,6 +21,16 @@
           attribution: '&copy; OpenTopoMap contributors',
           maxZoom: 17
         }).addTo(map);
+
+        // Add hardcoded KML file (FullRoute100DP.kml) to the map
+        const fullRouteLayer = L.geoJson(null, {
+          style: function() {
+            return { color: '#0000FF', weight: 3, opacity: 0.7 };
+          }
+        });
+        omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.kml', null, fullRouteLayer)
+          .bindPopup('<b>Full Route Overview</b><br>This is the complete route map.')
+          .addTo(map);
       
         const customLayer_Uslar__Germany_to_M_nster__Germany = L.geoJson(null, {
           style: function() {
