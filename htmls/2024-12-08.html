@@ -120,15 +120,21 @@
         map.fitBounds(runLayer.getBounds());
         elevationControl.addData(geoJSON);
         
+        let lastCall = 0;
         runLayer.on('mousemove', function(e) {
+          const now = Date.now();
+          if (now - lastCall < 100) return; // Limit updates to every 100ms
+          lastCall = now;
+
           const latlng = e.latlng;
-          elevationControl.elevationProfiles.forEach(function(profile) {
+          elevationControl.elevationProfiles.forEach(profile => {
             const point = profile.findClosestPoint(latlng);
             if (point) {
               profile.highlightPoint(point);
             }
           });
         });
+
       })
       .addTo(map);
   </script>
