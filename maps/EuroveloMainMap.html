@@ -28,7 +28,7 @@
       // Set fixed map center to 57.5?N, 15.5?E with zoom level 4
       const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
       L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '? OpenTopoMap contributors',
+        attribution: '&copy; OpenTopoMap contributors',
         maxZoom: 17
       }).addTo(map);
 
@@ -59,12 +59,27 @@
 
       // Add GeoJSON file (FullRoute100DP.json) to the map
       const fullRouteLayer = L.geoJson(null, {
-        style: function() {
-          return { color: '#0000FF', weight: 3, opacity: 0.7 };
+        style: function(feature) {
+          // Check if feature has properties and Type
+          if (feature.properties && feature.properties.Type) {
+            switch (feature.properties.Type) {
+              case 'Bike Path - Even':
+                return { color: '#6e7b8b', weight: 3, opacity: 0.7 }; // grey-blue
+              case 'Bike Path - Odd':
+                return { color: '#ff69b4', weight: 3, opacity: 0.7 }; // pink
+              case 'Ferry':
+                return { color: '#32cd32', weight: 3, opacity: 0.7 }; // lime green
+              case 'Tunnel':
+                return { color: '#800080', weight: 3, opacity: 0.7 }; // purple
+              default:
+                return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue
+            }
+          }
+          return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
         }
       });
 
-      // Load the GeoJSON data (now from .json file)
+      // Load the GeoJSON data
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(response => response.json())
         .then(data => {
@@ -80,31 +95,27 @@
           // Create a layer group to hold all the layers
           const sortedLayerGroup = L.layerGroup();
 
-          // Iterate through sorted features and add to layer group, applying styles based on 'Type'
+          // Iterate through sorted features and add to layer group
           sortedGeoJSON.features.forEach(function (feature) {
-            let featureStyle = {};
-            if (feature.properties && feature.properties.Type) {
-              switch (feature.properties.Type) {
-                case 'Bike Path - Even':
-                  featureStyle = { color: '#6082B6', weight: 3, opacity: 0.7 }; // Grey-blue
-                  break;
-                case 'Bike Path - Odd':
-                  featureStyle = { color: '#FF69B4', weight: 3, opacity: 0.7 }; // Pink
-                  break;
-                case 'Ferry':
-                  featureStyle = { color: '#32CD32', weight: 3, opacity: 0.7 }; // Lime Green
-                  break;
-                case 'Tunnel':
-                  featureStyle = { color: '#800080', weight: 3, opacity: 0.7 }; // Purple
-                  break;
-                default:
-                  featureStyle = { color: '#0000FF', weight: 3, opacity: 0.7 }; // Default to blue if the type doesn't match
-              }
-            }
-
-
             const layer = L.geoJson(feature, {
-              style: featureStyle, //Apply the style here.
+              style: function(feature) {
+                // Check if feature has properties and Type
+                if (feature.properties && feature.properties.Type) {
+                  switch (feature.properties.Type) {
+                    case 'Bike Path - Even':
+                      return { color: '#6e7b8b', weight: 3, opacity: 0.7 }; // grey-blue
+                    case 'Bike Path - Odd':
+                      return { color: '#ff69b4', weight: 3, opacity: 0.7 }; // pink
+                    case 'Ferry':
+                      return { color: '#32cd32', weight: 3, opacity: 0.7 }; // lime green
+                    case 'Tunnel':
+                      return { color: '#800080', weight: 3, opacity: 0.7 }; // purple
+                    default:
+                      return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue
+                  }
+                }
+                return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
+              },
               onEachFeature: function (feature, layer) {
                 // Ensure that the elevation data is added in the same order
                 if (layer.toGeoJSON) {
