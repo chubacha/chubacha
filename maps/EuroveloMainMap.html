@@ -64,18 +64,18 @@
           if (feature.properties && feature.properties.Type) {
             switch (feature.properties.Type) {
               case 'Bike Path - Even':
-                return { color: '#6e7b8b', weight: 3, opacity: 0.7 }; // grey-blue
+                return { color: '#6e7b8b', weight: 1.5, opacity: 1 }; // grey-blue
               case 'Bike Path - Odd':
-                return { color: '#ff69b4', weight: 3, opacity: 0.7 }; // pink
+                return { color: '#ff69b4', weight: 1.5, opacity: 1 }; // pink
               case 'Ferry':
-                return { color: '#32cd32', weight: 3, opacity: 0.7 }; // lime green
+                return { color: '#32cd32', weight: 1.5, opacity: 1 }; // lime green
               case 'Tunnel':
-                return { color: '#800080', weight: 3, opacity: 0.7 }; // purple
+                return { color: '#800080', weight: 1.5, opacity: 1 }; // purple
               default:
-                return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue
+                return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue
             }
           }
-          return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
+          return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue for features without Type
         }
       });
 
@@ -103,18 +103,18 @@
                 if (feature.properties && feature.properties.Type) {
                   switch (feature.properties.Type) {
                     case 'Bike Path - Even':
-                      return { color: '#6e7b8b', weight: 3, opacity: 0.7 }; // grey-blue
+                      return { color: '#6e7b8b', weight: 1.5, opacity: 1 }; // grey-blue
                     case 'Bike Path - Odd':
-                      return { color: '#ff69b4', weight: 3, opacity: 0.7 }; // pink
+                      return { color: '#ff69b4', weight: 1.5, opacity: 1 }; // pink
                     case 'Ferry':
-                      return { color: '#32cd32', weight: 3, opacity: 0.7 }; // lime green
+                      return { color: '#32cd32', weight: 1.5, opacity: 1 }; // lime green
                     case 'Tunnel':
-                      return { color: '#800080', weight: 3, opacity: 0.7 }; // purple
+                      return { color: '#800080', weight: 1.5, opacity: 1 }; // purple
                     default:
-                      return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue
+                      return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue
                   }
                 }
-                return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
+                return { color: '#0000FF', weight: 3, opacity: 1 }; // default blue for features without Type
               },
               onEachFeature: function (feature, layer) {
                 // Ensure that the elevation data is added in the same order
