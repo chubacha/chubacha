@@ -28,7 +28,7 @@
       // Set fixed map center to 57.5?N, 15.5?E with zoom level 4
       const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
       L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenTopoMap contributors',
+        attribution: '? OpenTopoMap contributors',
         maxZoom: 17
       }).addTo(map);
 
@@ -57,11 +57,38 @@
       }).addTo(map);
 
 
+    // Function to determine the style based on the "Type" property
+    function getFeatureStyle(feature) {
+        let type = feature.properties.Type;
+        let style = {
+            weight: 3,
+            opacity: 0.7
+        };
+
+        switch (type) {
+            case 'Bike Path - Even':
+                style.color = '#778899'; // grey-blue
+                break;
+            case 'Bike Path - Odd':
+                style.color = '#FFB6C1'; // pink
+                break;
+            case 'Ferry':
+                style.color = '#32CD32'; // Lime green
+                break;
+            case 'Tunnel':
+                style.color = '#800080'; // Purple
+                break;
+            default:
+                style.color = '#0000FF'; // default blue
+        }
+
+        return style;
+    }
+
+
       // Add GeoJSON file (FullRoute100DP.json) to the map
       const fullRouteLayer = L.geoJson(null, {
-        style: function() {
-          return { color: '#0000FF', weight: 3, opacity: 0.7 };
-        }
+        style: getFeatureStyle, // Use the style function here
       });
 
       // Load the GeoJSON data (now from .json file)
@@ -80,21 +107,19 @@
           // Create a layer group to hold all the layers
           const sortedLayerGroup = L.layerGroup();
 
-          // Iterate through sorted features and add to layer group
-          sortedGeoJSON.features.forEach(function (feature) {
-            const layer = L.geoJson(feature, {
+            // Add sorted GeoJSON data to the layer with the style function
+            L.geoJson(sortedGeoJSON, {
+              style: getFeatureStyle, // Apply styling
               onEachFeature: function (feature, layer) {
-                // Ensure that the elevation data is added in the same order
                 if (layer.toGeoJSON) {
-                  console.log('Adding elevation data for: ', feature.id); // Debugging log
-                  elevationControl.addData(layer.toGeoJSON()); // Add elevation data for this feature
+                  console.log('Adding elevation data for: ', feature.id);
+                  elevationControl.addData(layer.toGeoJSON());
                 }
+                // No popup binding here, or add your popup logic if needed
               }
-            });
+            }).addTo(sortedLayerGroup);
 
-            // Add each sorted layer to the layer group
-            sortedLayerGroup.addLayer(layer);
-          });
+
 
           // Add the sorted layer group to the map
           sortedLayerGroup.addTo(map);
