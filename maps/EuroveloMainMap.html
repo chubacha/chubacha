@@ -69,7 +69,7 @@
         .then(response => response.json())
         .then(data => {
           // Sort the GeoJSON features by 'id' property
-          const sortedFeatures = data.features.sort((a, b) => a.PortimaoOrder - b.PortimaoOrder);
+          const sortedFeatures = data.features.sort((a, b) => a.id - b.id);
 
           // Create a new GeoJSON object with the sorted features
           const sortedGeoJSON = {
