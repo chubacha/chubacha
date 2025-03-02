@@ -56,30 +56,49 @@
         }
       }).addTo(map);
 
+      // Function to sanitize leg name
+      function sanitizeLegName(name) {
+        return name.replace(/[^a-zA-Z0-9]/g, '_');
+      }
 
-      // Add GeoJSON file (FullRoute100DP.json) to the map
+      // Style function with zigzag patterns for Ferry and Tunnel
+      function getStyleByType(type) {
+        switch (type) {
+          case 'Bike Path - Even':
+            return { color: '#6e7b8b', weight: 3, opacity: 0.7 }; // grey-blue
+          case 'Bike Path - Odd':
+            return { color: '#ff69b4', weight: 3, opacity: 0.7 }; // pink
+          case 'Ferry':
+            return { 
+              color: '#32cd32', // lime green
+              weight: 3, 
+              opacity: 0.7,
+              dashArray: '10,5' // Simple dash pattern (10px dash, 5px gap)
+            };
+          case 'Tunnel':
+            return { 
+              color: '#800080', // purple
+              weight: 3, 
+              opacity: 0.7,
+              dashArray: '1,5,10,5' // More complex zigzag pattern (1px dash, 5px gap, 10px dash, 5px gap)
+            };
+          default:
+            return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue
+        }
+      }
+
+      // Add GeoJSON file to the map
       const fullRouteLayer = L.geoJson(null, {
         style: function(feature) {
           // Check if feature has properties and Type
           if (feature.properties && feature.properties.Type) {
-            switch (feature.properties.Type) {
-              case 'Bike Path - Even':
-                return { color: '#0000FF', weight: 1.5, opacity: 1 }; // grey-blue
-              case 'Bike Path - Odd':
-                return { color: '#ff69b4', weight: 1.5, opacity: 1 }; // pink
-              case 'Ferry':
-                return { color: '#ffa500', weight: 1.5, opacity: 1 }; // lime green
-              case 'Tunnel':
-                return { color: '#800080', weight: 1.5, opacity: 1 }; // purple
-              default:
-                return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue
-            }
+            return getStyleByType(feature.properties.Type);
           }
-          return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue for features without Type
+          return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
         }
       });
 
-      // Load the GeoJSON data
+      // Load the GeoJSON data (now from .json file)
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(response => response.json())
         .then(data => {
@@ -101,20 +120,9 @@
               style: function(feature) {
                 // Check if feature has properties and Type
                 if (feature.properties && feature.properties.Type) {
-                  switch (feature.properties.Type) {
-                    case 'Bike Path - Even':
-                      return { color: '#0000FF', weight: 1.5, opacity: 1 }; // grey-blue
-                    case 'Bike Path - Odd':
-                      return { color: '#ff69b4', weight: 1.5, opacity: 1 }; // pink
-                    case 'Ferry':
-                      return { color: '#ffa500', weight: 1.5, opacity: 1 }; // lime green
-                    case 'Tunnel':
-                      return { color: '#800080', weight: 1.5, opacity: 1 }; // purple
-                    default:
-                      return { color: '#0000FF', weight: 1.5, opacity: 1 }; // default blue
-                  }
+                  return getStyleByType(feature.properties.Type);
                 }
-                return { color: '#0000FF', weight: 3, opacity: 1 }; // default blue for features without Type
+                return { color: '#0000FF', weight: 3, opacity: 0.7 }; // default blue for features without Type
               },
               onEachFeature: function (feature, layer) {
                 // Ensure that the elevation data is added in the same order
@@ -144,8 +152,6 @@
           });
         })
         .catch(error => console.error('Error loading GeoJSON file: ', error));
-
-
 
       // Store the KML layers in an object
       const kmlLayers = {};
