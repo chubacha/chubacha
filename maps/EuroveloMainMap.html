@@ -124,20 +124,44 @@
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(function(response) { return response.json(); })
         .then(function(data) {
-          // Filter and sort LineString features by OrderBayonne
+          // Filter and sort LineString features by BayonneOrder
           var sortedLineStrings = data.features
             .filter(function(feature) {
               return feature.geometry.type === 'LineString' && 
-                     feature.properties.OrderBayonne !== undefined;
+                     feature.properties.BayonneOrder !== undefined;
             })
             .sort(function(a, b) {
-              return a.properties.OrderBayonne - b.properties.OrderBayonne;
+              return a.properties.BayonneOrder - b.properties.BayonneOrder;
             });
+
+          // Ensure coordinates have elevation (Z value)
+          function ensureElevation(coordinates) {
+            return coordinates.map(function(coord) {
+              // If coordinate doesn't have a third value (elevation), add 0
+              return coord.length === 2 ? [...coord, 0] : coord;
+            });
+          }
 
           // Combine coordinates of sorted LineStrings
           var combinedCoordinates = [];
+          var totalDistance = 0;
+          var lastElevation = 0;
+
           sortedLineStrings.forEach(function(feature) {
-            combinedCoordinates = combinedCoordinates.concat(feature.geometry.coordinates);
+            // Ensure coordinates have elevation
+            var processedCoords = ensureElevation(feature.geometry.coordinates);
+            
+            // If this is not the first segment, modify first point's elevation 
+            // to create a smooth transition
+            if (combinedCoordinates.length > 0) {
+              processedCoords[0][2] = lastElevation;
+            }
+
+            // Append coordinates
+            combinedCoordinates = combinedCoordinates.concat(processedCoords);
+            
+            // Update last elevation for next segment
+            lastElevation = processedCoords[processedCoords.length - 1][2];
           });
 
           // Create a new feature with combined coordinates
@@ -148,7 +172,9 @@
               coordinates: combinedCoordinates
             },
             properties: {
-              name: 'Full Route'
+              name: 'Full Route',
+              // You can add more properties if needed
+              distance: totalDistance
             }
           };
 
@@ -179,8 +205,14 @@
 
           // Fit map bounds to full route
           map.fitBounds(fullRouteLayer.getBounds());
+
+          // Log to help debug
+          console.log('Total segments:', sortedLineStrings.length);
+          console.log('Combined coordinates:', combinedCoordinates.length);
         })
-        .catch(function(error) { console.error('Error loading full route:', error); });
+        .catch(function(error) { 
+          console.error('Error loading full route:', error); 
+        });
     }
 
     // Lazily load KML layers
