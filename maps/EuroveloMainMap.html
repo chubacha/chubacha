@@ -28,7 +28,7 @@
       // Set fixed map center to 57.5?N, 15.5?E with zoom level 4
       const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        attribution: 'Tiles ? Esri ? Esri, DeLorme, NAVTEQ',
         maxZoom: 16
       }).addTo(map);
 
@@ -87,7 +87,7 @@
         }
       }
 
-      // Add GeoJSON file to the map
+      // Add GeoJSON file to the map.  This is done *asynchronously*.
       const fullRouteLayer = L.geoJson(null, {
         style: function(feature) {
           // Check if feature has properties and Type
@@ -98,7 +98,7 @@
         }
       });
 
-      // Load the GeoJSON data (now from .json file)
+      // Load the GeoJSON data (now from .json file) *asynchronously*
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(response => response.json())
         .then(data => {
@@ -128,7 +128,7 @@
                 // Ensure that the elevation data is added in the same order
                 if (layer.toGeoJSON) {
                   console.log('Adding elevation data for: ', feature.id); // Debugging log
-                  elevationControl.addData(layer.toGeoJSON()); // Add elevation data for this feature
+                  // Removed:  elevationControl.addData(layer.toGeoJSON()); // Add elevation data for this feature
                 }
               }
             });
@@ -147,7 +147,7 @@
           sortedLayerGroup.eachLayer(function(layer) {
             if (layer.toGeoJSON) {
               // Ensure each layer's elevation data is properly added
-              elevationControl.addData(layer.toGeoJSON());
+              elevationControl.addData(layer.toGeoJSON());  // Add to elevation control *after* adding to the map.
             }
           });
         })
@@ -156,7 +156,7 @@
       // Store the KML layers in an object
       const kmlLayers = {};
 
-      // Add dynamic KML layers
+      // Add dynamic KML layers.  This happens *asynchronously*.
       rows.forEach(function(row) {
         console.log('Adding KML layer for: ' + row.legName); // Debugging log
         const sanitizedLegName = sanitizeLegName(row.legName); // Sanitize leg name
@@ -168,20 +168,21 @@
           }
         });
 
-        // Add KML data to this layer
+        // Add KML data to this layer *asynchronously*.
         omnivore.kml(row.kmlUrl, null, kmlLayers[sanitizedLegName])
           .bindPopup('<b>' + row.legName + '</b><br>Track Date: ' + row.trackDate + '<br>Total Distance: ' + row.totalDistance + ' km<br>Days Ridden: ' + row.daysPassed + '<br>Day of Trip: ' + row.dayOfTrip + '<br><a href="' + row.blogPostLink + '">Blog Post</a>')
-          .addTo(map);
+          .addTo(map);  // Add to map *inside* the asynchronous callback.
 
-        // Add elevation data for dynamic KML layers
+        // Add elevation data for dynamic KML layers *after* they are added to the map.
         kmlLayers[sanitizedLegName].eachLayer(function(layer) {
           if (layer.toGeoJSON) {
-            elevationControl.addData(layer.toGeoJSON());
+              // Only add elevation data AFTER the layer is fully loaded and added to the map.
+              elevationControl.addData(layer.toGeoJSON());
           }
         });
       });
 
-      // Update elevation profile on mousemove
+      // Update elevation profile on mousemove.  This is less likely to cause slowdowns.
       map.on('mousemove', function(e) {
         const latlng = e.latlng;
         elevationControl.elevationProfiles.forEach(function(profile) {
