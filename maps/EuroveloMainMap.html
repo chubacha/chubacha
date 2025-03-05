@@ -111,137 +111,76 @@
       var routeLayers = L.layerGroup().addTo(map);
 
       // Lazily load full route GeoJSON
-// In the HTML script section, add back the elevation control initialization:
-function loadFullRoute() {
-  // Initialize Elevation Control (moved before fetch to ensure it's available)
-  var elevationControl = L.control.elevation({
-    position: 'bottomleft',
-    theme: 'steelblue-theme',
-    width: 600,
-    height: 125,
-    margins: {
-      top: 10,
-      right: 20,
-      bottom: 30,
-      left: 50
-    },
-    followMarker: true,
-    hoverNumber: true,
-    imperial: false,
-    reverseCoords: false,
-    useHeightIndicator: true,
-    graphStyle: {
-      plotBase: undefined,
-      plotLines: true,
-      preferCanvas: true
-    }
-  }).addTo(map);
+      function loadFullRoute() {
+        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
+          .then(function(response) { return response.json(); })
+          .then(function(data) {
+            // Ensure data.features is an array and sorted
+            var sortedFeatures = Array.isArray(data.features) 
+              ? data.features.sort(function(a, b) { 
+                  return (a.id || 0) - (b.id || 0); 
+                }) 
+              : [];
+            
+            // Create GeoJSON layer for full route
+            var fullRouteLayer = L.geoJson(null, {
+              style: function(feature) {
+                return feature.properties && feature.properties.Type 
+                  ? getStyleByType(feature.properties.Type)
+                  : { color: '#0000FF', weight: 2, opacity: 1 };
+              },
+              pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                  radius: 3,
+                  fillColor: "#ff7800",
+                  color: "#000",
+                  weight: 1,
+                  opacity: 1,
+                  fillOpacity: 0.8
+                });
+              }
+            });
 
-  fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-      // Ensure data.features is an array and sorted
-      var sortedFeatures = Array.isArray(data.features) 
-        ? data.features.sort(function(a, b) { 
-            return (a.id || 0) - (b.id || 0); 
-          }) 
-        : [];
-      
-      // Create GeoJSON layer for full route
-      var fullRouteLayer = L.geoJson(null, {
-        style: function(feature) {
-          return feature.properties && feature.properties.Type 
-            ? getStyleByType(feature.properties.Type)
-            : { color: '#0000FF', weight: 2, opacity: 1 };
-        },
-        pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, {
-            radius: 3,
-            fillColor: "#ff7800",
-            color: "#000",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-          });
-        },
-        onEachFeature: function(feature, layer) {
-          // Add elevation data for each feature
-          if (layer.toGeoJSON) {
-            elevationControl.addData(layer.toGeoJSON());
-          }
-        }
-      });
+            // Add features to the layer
+            fullRouteLayer.addData({
+              type: 'FeatureCollection', 
+              features: sortedFeatures
+            });
 
-      // Add features to the layer
-      fullRouteLayer.addData({
-        type: 'FeatureCollection', 
-        features: sortedFeatures
-      });
+            // Add full route layer to layer group
+            routeLayers.addLayer(fullRouteLayer);
 
-      // Add full route layer to layer group
-      routeLayers.addLayer(fullRouteLayer);
-
-      // Fit map bounds to full route
-      map.fitBounds(fullRouteLayer.getBounds());
-    })
-    .catch(function(error) { console.error('Error loading full route:', error); });
-}
-
-// Modify loadKMLLayers to also add KML elevation data
-function loadKMLLayers() {
-  // Ensure elevationControl is available
-  var elevationControl = L.control.elevation({
-    position: 'bottomleft',
-    theme: 'steelblue-theme',
-    width: 600,
-    height: 125,
-    margins: {
-      top: 10,
-      right: 20,
-      bottom: 30,
-      left: 50
-    },
-    followMarker: true,
-    hoverNumber: true,
-    imperial: false,
-    reverseCoords: false,
-    useHeightIndicator: true,
-    graphStyle: {
-      plotBase: undefined,
-      plotLines: true,
-      preferCanvas: true
-    }
-  }).addTo(map);
-
-  rows.forEach(function(row) {
-    // Create a layer for the current KML
-    var kmlLayer = L.geoJson(null, {
-      style: function() {
-        return { color: row.trackColor, weight: 4, opacity: 0.8 };
-      },
-      onEachFeature: function(feature, layer) {
-        // Add elevation data for each feature
-        if (layer.toGeoJSON) {
-          elevationControl.addData(layer.toGeoJSON());
-        }
+            // Fit map bounds to full route
+            map.fitBounds(fullRouteLayer.getBounds());
+          })
+          .catch(function(error) { console.error('Error loading full route:', error); });
       }
-    });
 
-    // Prepare popup content using traditional concatenation
-    var popupContent = 
-      '<b>' + (row.legName || '') + '</b><br>' +
-      'Track Date: ' + (row.trackDate || 'N/A') + '<br>' +
-      'Total Distance: ' + (row.totalDistance || 'N/A') + ' km<br>' +
-      'Days Ridden: ' + (row.daysPassed || 'N/A') + '<br>' +
-      'Day of Trip: ' + (row.dayOfTrip || 'N/A') + '<br>' +
-      (row.blogPostLink ? '<a href="' + row.blogPostLink + '">Blog Post</a>' : '');
+      // Lazily load KML layers
+      function loadKMLLayers() {
+        rows.forEach(function(row) {
+          // Create a layer for the current KML
+          var kmlLayer = L.geoJson(null, {
+            style: function() {
+              return { color: row.trackColor, weight: 4, opacity: 0.8 };
+            }
+          });
 
-    // Add KML data to layer
-    omnivore.kml(row.kmlUrl, null, kmlLayer)
-      .bindPopup(popupContent)
-      .addTo(routeLayers);
-  });
-}
+          // Prepare popup content using traditional concatenation
+          var popupContent = 
+            '<b>' + (row.legName || '') + '</b><br>' +
+            'Track Date: ' + (row.trackDate || 'N/A') + '<br>' +
+            'Total Distance: ' + (row.totalDistance || 'N/A') + ' km<br>' +
+            'Days Ridden: ' + (row.daysPassed || 'N/A') + '<br>' +
+            'Day of Trip: ' + (row.dayOfTrip || 'N/A') + '<br>' +
+            (row.blogPostLink ? '<a href="' + row.blogPostLink + '">Blog Post</a>' : '');
+
+          // Add KML data to layer
+          omnivore.kml(row.kmlUrl, null, kmlLayer)
+            .bindPopup(popupContent)
+            .addTo(routeLayers);
+        });
+      }
 
       // Load data after page load to improve initial load time
       window.addEventListener('load', function() {
