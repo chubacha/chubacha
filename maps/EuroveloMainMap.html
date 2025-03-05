@@ -2,148 +2,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>     EuroVelo Route - Start/End in Bayonne, France</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
-  <style>
-    body {
-      background-color: #cfcfcf; /* Slight grey background */
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    #map { height: 700px; width: 100%; }
-  </style>
+    <title>EuroVelo Route - Start/End in Bayonne, France</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.js"></script>
+    <style>
+        body { background-color: #cfcfcf; margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 700px; width: 100%; }
+    </style>
 </head>
 <body>
-  <h2>     EuroVelo Route - Start/End in Bayonne, France</h2>
-  <div id="map"></div>
-  <script>
-    // Pass rows data as a JavaScript variable
-    const rows = [];
+    <h2>EuroVelo Route - Start/End in Bayonne, France</h2>
+    <div id="map"></div>
+    <script>
+        const rows = [];
+        const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles ? Esri ? Esri, DeLorme, NAVTEQ',
+            maxZoom: 16
+        }).addTo(map);
 
-    // Set fixed map center
-    const map = L.map('map', {zoomSnap: 0.25}).setView([57.5, 15.5], 3.75);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles ? Esri ? Esri, DeLorme, NAVTEQ',
-      maxZoom: 16
-    }).addTo(map);
+        const elevationControl = L.control.elevation({
+            position: 'bottomleft',
+            theme: 'steelblue-theme',
+            width: 600,
+            height: 125,
+            margins: { top: 10, right: 20, bottom: 30, left: 50 },
+            followMarker: true,
+            hoverNumber: true,
+            imperial: false,
+            reverseCoords: false,
+            useHeightIndicator: true,
+            graphStyle: { plotBase: undefined, plotLines: true, preferCanvas: true }
+        }).addTo(map);
 
-    // Initialize Elevation Control
-    const elevationControl = L.control.elevation({
-      position: 'bottomleft',
-      theme: 'steelblue-theme',
-      width: 600,
-      height: 125,
-      margins: {
-        top: 10,
-        right: 20,
-        bottom: 30,
-        left: 50
-      },
-      followMarker: true,
-      hoverNumber: true,
-      imperial: false,
-      reverseCoords: false,
-      useHeightIndicator: true,
-      graphStyle: {
-        plotBase: undefined,
-        plotLines: true,
-        preferCanvas: true
-      }
-    }).addTo(map);
-
-    // Function to sanitize leg name
-    function sanitizeLegName(name) {
-      return name.replace(/[^a-zA-Z0-9]/g, '_');
-    }
-
-    // Style function
-    function getStyleByType(type) {
-      switch (type) {
-        case 'Bike Path - Even':  return { color: '#59ffff', weight: 2, opacity: 1 };
-        case 'Bike Path - Odd':   return { color: '#dc143c', weight: 2, opacity: 1 };
-        case 'Ferry':            return { color: '#ff8c00', weight: 2, opacity: 1, dashArray: '2,4' };
-        case 'Tunnel':           return { color: '#800080', weight: 2, opacity: 1, dashArray: '1,5,10,5' };
-        default:                 return { color: '#0000FF', weight: 2, opacity: 1 };
-      }
-    }
-
-    // Load GeoJSON data and add to map
-    fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
-      .then(response => response.json())
-      .then(data => {
-        const sortedFeatures = data.features.sort((a, b) => a.id - b.id);
-        const sortedGeoJSON = { type: 'FeatureCollection', features: sortedFeatures };
-        const sortedLayerGroup = L.layerGroup();
-
-        sortedGeoJSON.features.forEach(feature => {
-          const layer = L.geoJson(feature, {
-            style: feature => (feature.properties && feature.properties.Type) ? getStyleByType(feature.properties.Type) : { color: '#0000FF', weight: 2, opacity: 1 },
-            onEachFeature: (feature, layer) => {
-                // Add to elevation control inside onEachFeature, but AFTER adding the layer to the map
-                layer.on('add', () => {  
-                  if (layer.toGeoJSON) {
-                    console.log('Adding elevation data for: ', feature.id);
-                    elevationControl.addData(layer.toGeoJSON());
-                  }
-                });
+        function getStyleByType(type) {
+            switch (type) {
+                case 'Bike Path - Even': return { color: '#59ffff', weight: 2, opacity: 1 };
+                case 'Bike Path - Odd':  return { color: '#dc143c', weight: 2, opacity: 1 };
+                case 'Ferry':           return { color: '#ff8c00', weight: 2, opacity: 1, dashArray: '2,4' };
+                case 'Tunnel':          return { color: '#800080', weight: 2, opacity: 1, dashArray: '1,5,10,5' };
+                default:                return { color: '#0000FF', weight: 2, opacity: 1 };
             }
-          });
-          sortedLayerGroup.addLayer(layer);
-        });
+        }
 
-        sortedLayerGroup.addTo(map);
-        map.fitBounds(sortedLayerGroup.getBounds());
-      })
-      .catch(error => console.error('Error loading GeoJSON file: ', error));
+        // Load and process GeoJSON (Elevation data ONLY from here)
+        fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
+        .then(response => response.json())
+        .then(data => {
+            const sortedFeatures = data.features.sort((a, b) => a.id - b.id);
+            L.geoJSON(sortedFeatures, {
+                style: feature => getStyleByType(feature.properties?.Type || null),
+                onEachFeature: (feature, layer) => {
+                    layer.on('add', () => {
+                        if (layer.toGeoJSON) {
+                            elevationControl.addData(layer.toGeoJSON()); // Add elevation data
+                        }
+                    });
+                }
+            }).addTo(map);
+            map.fitBounds(L.geoJSON(sortedFeatures).getBounds());
+        })
+        .catch(error => console.error('Error loading GeoJSON:', error));
 
-    // Store KML layers
-    const kmlLayers = {};
-
-    // Add dynamic KML layers
-    rows.forEach(row => {
-      const sanitizedLegName = sanitizeLegName(row.legName);
-      kmlLayers[sanitizedLegName] = L.geoJson(null, {
-        style: () => ({ color: row.trackColor, weight: 4, opacity: 0.8 })
-      });
-
-      // Use a self-invoking function to properly scope 'layer' and 'row'
-      (function(kmlLayer, rowData) {
-          omnivore.kml(rowData.kmlUrl, null, kmlLayer)
-            .on('ready', function() { // Use 'ready' event
-                kmlLayer.addTo(map); // Add to map *inside* the 'ready' callback
-                kmlLayer.bindPopup('<b>' + rowData.legName + '</b><br>Track Date: ' + rowData.trackDate + '<br>Total Distance: ' + rowData.totalDistance + ' km<br>Days Ridden: ' + rowData.daysPassed + '<br>Day of Trip: ' + rowData.dayOfTrip + '<br><a href="' + rowData.blogPostLink + '">Blog Post</a>');
-
-                // Add Elevation data after the layer is ready and added to the map.
-                kmlLayer.eachLayer(function(layer) {
-                  if (layer.toGeoJSON) {
-                    elevationControl.addData(layer.toGeoJSON());
-                  }
-                });
-
-            })
-            .on('error', function() {
-                console.error("Error loading KML: ", rowData.kmlUrl)
+        // Load and process KML layers (NO elevation data here)
+        rows.forEach(row => {
+            const sanitizedLegName = sanitizeLegName(row.legName);
+            const kmlLayer = L.geoJson(null, {
+                style: { color: row.trackColor, weight: 4, opacity: 0.8 }
             });
 
-      })(kmlLayers[sanitizedLegName], row); // Pass kmlLayer and row to the IIFE
-    });
-
-
-    // Update elevation profile on mousemove (less critical, can remain as is)
-    map.on('mousemove', function(e) {
-      const latlng = e.latlng;
-      elevationControl.elevationProfiles.forEach(function(profile) {
-        const point = profile.findClosestPoint(latlng);
-        if (point) {
-          profile.highlightPoint(point);
-        }
-      });
-    });
-  </script>
+            // IIFE for proper scoping
+            (function(kmlLayer, rowData) {
+                omnivore.kml(rowData.kmlUrl)
+                .on('ready', function() {
+                    kmlLayer.addTo(map);
+                    kmlLayer.bindPopup('<b>' + rowData.legName + '</b><br>Track Date: ' + rowData.trackDate +
+                                        '<br>Total Distance: ' + rowData.totalDistance + ' km<br>Days Ridden: ' + rowData.daysPassed +
+                                        '<br>Day of Trip: ' + rowData.dayOfTrip + '<br><a href="' + rowData.blogPostLink + '">Blog Post</a>');
+                    // NO elevation data added for KML layers
+                })
+                .on('error', error => console.error('KML loading error:', error, rowData.kmlUrl))
+                .addTo(kmlLayer);
+            })(kmlLayer, row);
+        });
+    </script>
 </body>
 </html>
