@@ -6,10 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.0/dist/leaflet-elevation.min.css" />
   <style>
     body {
       background-color: #cfcfcf;
@@ -18,14 +15,17 @@
       overflow-x: hidden;
     }
     #map { 
-      height: 60vh; 
+      height: 70vh; 
       width: 100%; 
       max-width: 100%;
     }
-    #elevation-chart {
-      height: 25vh;
-      width: 100%;
-      background-color: white;
+    .leaflet-control.elevation .elevation-summary {
+      font-size: 0.8em;
+      font-weight: bold;
+      color: #333;
+      background: rgba(255,255,255,0.7);
+      padding: 5px;
+      border-radius: 3px;
     }
     #loading-overlay {
       position: fixed;
@@ -41,35 +41,15 @@
       font-size: 1.5em;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.0/dist/leaflet-elevation.min.js"></script>
 </head>
 <body>
   <div id="loading-overlay">Loading Map...</div>
   <h2>EuroVelo Route - Start/End in Bayonne, France</h2>
   <div id="map"></div>
-  <canvas id="elevation-chart"></canvas>
   <script>
-    // Disable touch zoom to prevent accidental zooming on mobile
-    function disableTouchZoom(map) {
-      map.touchZoom.disable();
-      map.scrollWheelZoom.disable();
-    }
-
-    // Debounce function to limit rate of function calls
-    function debounce(func, wait) {
-      var timeout;
-      return function executedFunction() {
-        var context = this;
-        var args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(function() {
-          func.apply(context, args);
-        }, wait);
-      };
-    }
-
-    // Pass rows data as a JavaScript variable in the iframe
-    var rows = []; // This will be replaced with actual row data
-
     // Initialize map with performance optimizations
     var map = L.map('map', {
       zoomSnap: 0.25,
@@ -78,6 +58,30 @@
       preferCanvas: true
     }).setView([57.5, 15.5], 3.75);
 
+    // Initialize elevation control
+    var elevationControl = L.control.elevation({
+      position: 'bottomleft',
+      theme: 'steelblue-theme',
+      width: '100%',
+      height: 200,
+      margins: {
+        top: 10,
+        right: 20,
+        bottom: 30,
+        left: 50
+      },
+      followMarker: true,
+      hoverNumber: true,
+      imperial: false,
+      reverseCoords: false,
+      useHeightIndicator: true,
+      graphStyle: {
+        plotBase: undefined,
+        plotLines: true,
+        preferCanvas: true
+      }
+    }).addTo(map);
+
     // Add a performant tile layer
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
@@ -85,8 +89,8 @@
       crossOrigin: true
     }).addTo(map);
 
-    // Disable touch zoom to prevent accidental zooming
-    disableTouchZoom(map);
+    // Create a layer group to hold all route layers
+    var routeLayers = L.layerGroup().addTo(map);
 
     // Style function with zigzag patterns for Ferry and Tunnel
     function getStyleByType(type, color) {
@@ -115,13 +119,7 @@
       }
     }
 
-    // Create a layer group to hold all route layers
-    var routeLayers = L.layerGroup().addTo(map);
-
-    // Elevation chart variable
-    var elevationChart = null;
-
-    // Lazily load full route GeoJSON with elevation data
+    // Lazily load full route GeoJSON
     function loadFullRoute() {
       fetch('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/FullRoute100DP.geojson')
         .then(function(response) { return response.json(); })
@@ -149,14 +147,16 @@
                 opacity: 1,
                 fillOpacity: 0.8
               });
-            },
-            onEachFeature: function(feature, layer) {
-              // Add elevation data for the chart
-              if (feature.geometry.type === 'LineString') {
-                createElevationChart(feature);
-              }
             }
           });
+
+          // Prepare GeoJSON for elevation control
+          var elevationGeoJSON = {
+            type: 'FeatureCollection',
+            features: sortedFeatures.filter(function(feature) {
+              return feature.geometry.type === 'LineString';
+            })
+          };
 
           // Add features to the layer
           fullRouteLayer.addData({
@@ -167,76 +167,20 @@
           // Add full route layer to layer group
           routeLayers.addLayer(fullRouteLayer);
 
+          // Add elevation to the elevation control (first LineString)
+          if (elevationGeoJSON.features.length > 0) {
+            elevationControl.addData(elevationGeoJSON.features[0]);
+          }
+
           // Fit map bounds to full route
           map.fitBounds(fullRouteLayer.getBounds());
         })
         .catch(function(error) { console.error('Error loading full route:', error); });
     }
 
-    // Create elevation chart using Chart.js
-    function createElevationChart(feature) {
-      if (!feature.geometry.coordinates) return;
-
-      // Extract elevation and distance data
-      var elevationData = feature.geometry.coordinates.map(function(coord, index) {
-        return {
-          distance: index, // Use index as a simple distance proxy
-          elevation: coord[2] || 0 // Elevation is the third coordinate (Z)
-        };
-      });
-
-      // Prepare data for Chart.js
-      var chartData = {
-        labels: elevationData.map(function(point) { return point.distance; }),
-        datasets: [{
-          label: 'Elevation',
-          data: elevationData.map(function(point) { return point.elevation; }),
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1,
-          fill: false
-        }]
-      };
-
-      // Create or update chart
-      var ctx = document.getElementById('elevation-chart').getContext('2d');
-      if (elevationChart) {
-        elevationChart.destroy();
-      }
-      
-      elevationChart = new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Route Elevation Profile'
-            },
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Distance (proxy)'
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Elevation (m)'
-              }
-            }
-          }
-        }
-      });
-    }
-
     // Lazily load KML layers
     function loadKMLLayers() {
+      var rows = []; // This will be replaced with actual row data
       rows.forEach(function(row) {
         // Create a layer for the current KML
         var kmlLayer = L.geoJson(null, {
@@ -271,14 +215,9 @@
       loadKMLLayers();
     });
 
-    // Responsive resize handling
-    var resizeMap = debounce(function() {
-      map.invalidateSize();
-      if (elevationChart) {
-        elevationChart.resize();
-      }
-    }, 250);
-    window.addEventListener('resize', resizeMap);
+    // Disable touch zoom to prevent accidental zooming
+    map.touchZoom.disable();
+    map.scrollWheelZoom.disable();
   </script>
 </body>
 </html>
