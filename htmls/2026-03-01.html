@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2026-03-01.kml</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+  <style>
+    #map { height: 400px; width: 100%; }
+    #elevation-div { height: 200px; width: 100%; }
+    .start-marker { background-color: #00ff00; }
+    .end-marker { background-color: #ff0000; }
+    .custom-marker {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    }
+    .marker-label {
+      background-color: white;
+      border: none;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 12px;
+      margin-top: -2px;
+    }
+  </style>
+</head>
+<body>
+  <h2>2026-03-01.kml</h2>
+  <div id="map"></div>
+  <div id="elevation-div"></div>
+  <script>
+    const map = L.map('map');
+    
+    // Changed to OpenTopoMap for a more muted basemap
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      maxZoom: 16
+    }).addTo(map);
+    
+    const customLayer = L.geoJson(null, {
+      style: function() {
+        return { 
+          color: '#FFFFFF',
+          weight: 4,
+          opacity: 0.8
+        };
+      }
+    });
+    
+    const elevationControl = L.control.elevation({
+      position: 'bottomleft',
+      theme: 'steelblue-theme',
+      width: 600,
+      height: 125,
+      margins: {
+        top: 10,
+        right: 20,
+        bottom: 30,
+        left: 50
+      },
+      followMarker: true,
+      hoverNumber: true,
+      imperial: false,
+      reverseCoords: false,
+      useHeightIndicator: true,
+      graphStyle: {
+        plotBase: undefined,
+        plotLines: true,
+        preferCanvas: true
+      }
+    }).addTo(map);
+
+    function createMarkerIcon(className) {
+      const html = '<div class="custom-marker ' + className + '"></div>';
+      return L.divIcon({
+        html: html,
+        className: '',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+    }
+
+    function createLabelIcon(text) {
+      return L.divIcon({
+        html: '<div class="marker-label">' + text + '</div>',
+        className: '',
+        iconSize: [40, 20],
+        iconAnchor: [20, 0]
+      });
+    }
+
+    const startIcon = createMarkerIcon('start-marker');
+    const endIcon = createMarkerIcon('end-marker');
+    
+    const runLayer = omnivore.kml('https://raw.githubusercontent.com/chubacha/chubacha/main/kmls/2026-03-01.kml', null, customLayer)
+      .on('ready', function() {
+        const geoJSON = this.toGeoJSON();
+        if (geoJSON.features.length > 0 && geoJSON.features[0].geometry.coordinates.length > 0) {
+          const coords = geoJSON.features[0].geometry.coordinates;
+          const start = coords[0];
+          const end = coords[coords.length - 1];
+          
+          // Add markers with labels
+          L.marker([start[1], start[0]], {icon: startIcon}).addTo(map);
+          L.marker([start[1], start[0]], {icon: createLabelIcon('Start')}).addTo(map);
+          
+          L.marker([end[1], end[0]], {icon: endIcon}).addTo(map);
+          L.marker([end[1], end[0]], {icon: createLabelIcon('End')}).addTo(map);
+        }
+        
+        map.fitBounds(runLayer.getBounds());
+        elevationControl.addData(geoJSON);
+        
+        let lastCall = 0;
+        runLayer.on('mousemove', function(e) {
+          const now = Date.now();
+          if (now - lastCall < 100) return; // Limit updates to every 100ms
+          lastCall = now;
+
+          const latlng = e.latlng;
+          elevationControl.elevationProfiles.forEach(profile => {
+            const point = profile.findClosestPoint(latlng);
+            if (point) {
+              profile.highlightPoint(point);
+            }
+          });
+        });
+
+      })
+      .addTo(map);
+  </script>
+</body>
+</html>
